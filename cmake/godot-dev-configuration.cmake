@@ -144,6 +144,7 @@ ENDIF ()
 # Godot C++ bindings library setup/configuration
 # =======================================================================
 
+set( GODOT_BUILD_PROFILE "${CMAKE_SOURCE_DIR}/extern/godot-cpp-profile.json" )
 ADD_SUBDIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/extern/godot-cpp )
 
 # =======================================================================

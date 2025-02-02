@@ -52,8 +52,7 @@ ENDIF ()
 
 # Setup the CMAKE_MODULE_PATH
 LIST(APPEND CMAKE_MODULE_PATH
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/"
-        "${CMAKE_CURRENT_SOURCE_DIR}/extern/godot-cpp/cmake/")
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
 # Include and execute various CMAKE modules
 INCLUDE(generate-authors)
@@ -61,7 +60,6 @@ INCLUDE(generate-license)
 INCLUDE(generate-version)
 INCLUDE(generate-donors)
 INCLUDE(godot-extension-db-generator)
-INCLUDE(godot-docs-generator)
 
 # Generation steps
 GENERATE_AUTHORS()
@@ -69,7 +67,6 @@ GENERATE_LICENSE()
 GENERATE_VERSION()
 GENERATE_DONORS()
 GENERATE_GODOT_EXTENSION_DB()
-GENERATE_GODOT_DOCUMENTATION()
 
 # Configure project
 PROJECT("${GDEXTENSION_LIB_NAME}" LANGUAGES C CXX VERSION ${RESOLVED_VERSION})
@@ -82,9 +79,6 @@ IF (WIN32)
     SET(win32_file_description "Godot ${win32_product_name} Plug-in")
     CONFIGURE_FILE(cmake/templates/windows.rc.in ${CMAKE_CURRENT_BINARY_DIR}/_generated/version.rc @ONLY)
 ENDIF ()
-
-# Orchestrator is an editor plug-in, force TOOLS_ENABLED
-ADD_COMPILE_DEFINITIONS(TOOLS_ENABLED)
 
 # MacOS universal binary support
 IF (APPLE)
@@ -99,6 +93,11 @@ SET(compiler_is_msvc "$<CXX_COMPILER_ID:MSVC>")
 # Configure godot-cpp - a statically linked library to this project.
 INCLUDE(godot-dev-configuration)
 
+# Generate Doc Data
+file( GLOB_RECURSE DOC_XML LIST_DIRECTORIES NO CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/doc_classes/*.xml" )
+SET(DOC_DATA_CPP_FILE "${CMAKE_BINARY_DIR}/_generated/doc_data.cpp")
+generate_doc_source( "${DOC_DATA_CPP_FILE}" "${DOC_XML}" )
+
 # Library sources
 FILE(GLOB_RECURSE gdext_sources
         CONFIGURE_DEPENDS
@@ -106,14 +105,12 @@ FILE(GLOB_RECURSE gdext_sources
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*.[hc]pp"
         # Includes the generated doc data from /doc_classes
         "${CMAKE_BINARY_DIR}/_generated/*.cpp"
+        "${DOC_DATA_CPP_FILE}"
         # Include windows version resource, if exists
         "${CMAKE_CURRENT_BINARY_DIR}/_generated/version.rc")
 
 # GDExtension library
 ADD_LIBRARY(${PROJECT_NAME} SHARED ${gdext_sources})
-
-## Import compiler warnings from godot-cpp
-INCLUDE(GodotCompilerWarnings)
 
 # Setup compiler options for GDExtension Library based on the compiler used
 TARGET_COMPILE_OPTIONS(${PROJECT_NAME} PUBLIC
@@ -180,26 +177,14 @@ IF (AUTOFORMAT_SRC_ON_CONFIGURE MATCHES ON)
 ENDIF ()
 
 # Dependency linking
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC godot::cpp)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC godot-cpp.editor)
 
 SET(GDEXTENSION_LIB_PREFIX "")
 
-IF (NOT ANDROID)
-    IF (CMAKE_SIZEOF_VOID_P EQUAL 8)
-        SET(system_bits 64)
-    ELSE ()
-        SET(system_bits 32)
-    ENDIF ()
-ELSE ()
-    SET(GDEXTENSION_LIB_PREFIX "lib")
-    IF (CMAKE_ANDROID_ARCH STREQUAL "arm64")
-        SET(system_bits 64)
-    ELSE ()
-        SET(system_bits 32)
-    ENDIF ()
-ENDIF ()
-
-STRING(TOLOWER "${PROJECT_NAME}.${CMAKE_SYSTEM_NAME}.${system_bits}.${CMAKE_BUILD_TYPE}" GDEXTENSION_LIB_NAME)
+### Get useful properties of the library
+get_target_property( GODOT_PLATFORM godot-cpp::editor GODOT_PLATFORM   )
+get_target_property( GODOT_TARGET   godot-cpp::editor GODOT_TARGET     )
+get_target_property( GODOT_ARCH     godot-cpp::editor GODOT_ARCH       )
 
 SET_TARGET_PROPERTIES(${PROJECT_NAME}
         PROPERTIES
@@ -212,7 +197,7 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}
         RUNTIME_OUTPUT_DIRECTORY "${GDEXTENSION_LIB_PATH}"
         CMAKE_PDB_OUTPUT_DIRECTORY "${GDEXTENSION_LIB_PATH}"
         CMAKE_COMPILE_PDB_OUTPUT_DIRECTORY "${GDEXTENSION_LIB_PATH}"
-        OUTPUT_NAME "${GDEXTENSION_LIB_NAME}")
+        OUTPUT_NAME "${PROJECT_NAME}.${GODOT_PLATFORM}.${GODOT_ARCH}.$<LOWER_CASE:$<CONFIG>>")
 
 INCLUDE(cmake-utils)
 

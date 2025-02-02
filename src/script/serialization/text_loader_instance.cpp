@@ -884,7 +884,7 @@ Error OScriptTextResourceLoaderInstance::load()
 
 					    // todo: does this create any issues?
 					    #if GODOT_VERSION >= 0x040400
-						_resource->set_as_translation_remapped(_translation_remapped);
+						// FIXME _resource->set_as_translation_remapped(_translation_remapped);
 					    #endif
 					}
 			        else
