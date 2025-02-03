@@ -16,47 +16,6 @@
 ##
 
 # =======================================================================
-# Godot Engine submodule update/init
-# =======================================================================
-
-# Confirms that the Godot Engine source files exist.
-# Assumes that if they don't, the submodule has not yet been initialized.
-
-IF ( NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/godot-engine/core" )
-    MESSAGE( NOTICE "Godot engine sources not found" )
-    MESSAGE( NOTICE "initializing/updating the engine submodule..." )
-
-    # update the engine submodule to populate it with the
-    # code necessary to build a debug version of the editor that
-    # can be easily debugged along with the library
-    EXECUTE_PROCESS(
-            COMMAND git submodule update --init extern/godot-engine
-            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-            COMMAND_ERROR_IS_FATAL ANY
-    )
-ENDIF ()
-
-# =======================================================================
-# Godot-cpp bindings submodule update/init
-# =======================================================================
-
-# Confirms that the Godot CPP extension source files exist.
-# Assumes that if they don't, the submodule has not yet been initialized.
-
-IF ( NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/godot-cpp/src" )
-    MESSAGE( NOTICE "godot-cpp bindings source not found" )
-    MESSAGE( NOTICE "initializing/updating the godot-cpp submodule..." )
-
-    # update the c++ bindings submodule to populate it with
-    # the necessary source for the library
-    EXECUTE_PROCESS(
-            COMMAND git submodule update --init extern/godot-cpp
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMAND_ERROR_IS_FATAL ANY
-    )
-ENDIF ()
-
-# =======================================================================
 # Godot editor/engine debug build
 # =======================================================================
 
@@ -139,12 +98,6 @@ ENDIF ()
 #        MESSAGE( FATAL_ERROR "Couldn't find godot debug executable after scons build: ${godot_debug_editor_executable}" )
 #    ENDIF ()
 #ENDIF ()
-
-# =======================================================================
-# Godot C++ bindings library setup/configuration
-# =======================================================================
-
-ADD_SUBDIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/extern/godot-cpp )
 
 # =======================================================================
 # Godot engine library setup/configuration.
